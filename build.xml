@@ -1,0 +1,26 @@
+
+<project name="SimpleWebServer" default="class" basedir=".">
+
+	<description>
+		A simple web server that is capable of serving a subset of HTTP requests over HTTP/1.0.
+	</description>
+
+	<property name="src" location="src"/>
+	<property name="build" location="bin"/>
+
+	<!-- Clean up existing build files -->
+	<target name="clean">
+		<delete dir="${build}"/>
+	</target>
+
+	<!-- Prepare the output directory -->
+	<target name="init" depends="clean">
+		<mkdir dir="${build}"/>
+	</target>
+
+	<!-- Build the classes -->
+	<target name="class" depends="init">
+		<javac srcdir="${src}" destdir="${build}"/>
+	</target>
+
+</project>
