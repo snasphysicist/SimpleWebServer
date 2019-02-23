@@ -1,4 +1,4 @@
-package com.snasphysicist.chinesecharacterpracticesheets;
+package com.snasphysicist.simplewebserver ;
 
 import java.util.Hashtable ;
 

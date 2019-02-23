@@ -1,5 +1,5 @@
 
-package com.snasphysicist.chinesecharacterpracticesheets;
+package com.snasphysicist.simplewebserver ;
 
 import java.io.BufferedOutputStream;
 import java.io.PrintStream ;
