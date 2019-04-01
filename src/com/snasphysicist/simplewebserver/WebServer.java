@@ -18,9 +18,9 @@ public class WebServer implements Runnable {
 	private ServerSocket socket ;
 	private Router router ;
 		
-	public WebServer( int port ) {
+	public WebServer( int port , Router router ) {
 		this.port = port ;
-		this.router = new Router() ;
+		this.router = router ;
 		LOG.log( Level.INFO, String.format( "Server initialized on port %d" , port ) ) ;
 	}
 	

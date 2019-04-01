@@ -5,6 +5,7 @@ import java.util.Hashtable ;
 import java.util.function.Function ;
 import java.util.logging.Logger ;
 import java.util.logging.Level ;
+import java.net.URL ;
 
 public class Router {
 	
@@ -18,6 +19,47 @@ public class Router {
 
 	public void addRoute( String uri, Function<Request,Response> handler ) {
 		routes.put( uri, handler ) ;
+	}
+	
+	public void addStaticAsset( String uri , String title , URL filePath ) {
+		
+		Function<Request,Response> staticAssetHandler =
+				new Function<Request,Response>() {
+					@Override
+					public Response apply( Request rawRequest ) {
+						
+						Response response ;
+						
+						switch( StaticTextResponse.guessContentType( filePath ) ) {
+							case APPLICATIONJAVASCRIPT :
+							case TEXTCSS :
+							case TEXTHTML :
+							case APPLICATIONJSON : {
+								response = new StaticTextResponse( 
+										Protocol.HTTP10 , 200 , 
+										title , filePath 
+										) ;
+								break ;
+							}
+							case IMAGEBMP :
+							case IMAGEJPEG :
+							case IMAGEPNG :
+							case APPLICATIONOCTETSTREAM : 
+							default :{
+								response = new StaticFileResponse(
+										Protocol.HTTP10 , 200 , 
+										title , filePath 
+										) ;
+							}
+							
+						}
+						
+						return response ;
+					}
+				} ;
+				
+		this.addRoute( uri , staticAssetHandler ) ;
+		
 	}
 	
 	public void setErrorHandler( int statusCode, Function<Request,Response> handler ) {
