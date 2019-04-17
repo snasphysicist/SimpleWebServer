@@ -11,7 +11,7 @@ import java.net.URLDecoder;
 import java.util.logging.Logger ;
 import java.util.logging.Level ;
 
-public class Request {
+public class Request implements Runnable {
 	
 	private final static Logger LOG = Logger.getLogger( Logger.class.getName() ) ;
 	
@@ -24,12 +24,20 @@ public class Request {
 	private Protocol protocol ;
 	private LinkedList<Header> headers ;
 	protected String body ;
+	protected Socket connection ;
+	protected Router router ;
 	
 	public Request() {
 		/*
 		 * Do nothing
-		 * fromSocket will do the processing
+		 * handle will do the processing
+		 * Router/Socket set elsewhere
 		 */
+	}
+	
+	public Request( Socket connection , Router router ) {
+		this.connection = connection ;
+		this.router = router ;
 	}
 	
 	/*
@@ -43,6 +51,34 @@ public class Request {
 		this.uri = request.getUri() ;
 		this.headers = request.headers ;
 		this.body = request.getBody() ;
+		this.connection = request.connection ;
+		this.router = request.router ;
+	}
+	
+	/*
+	 * Set the socket in the request from which to read
+	 */
+	public void passSocket( Socket connection ) {
+		this.connection = connection ;
+	}
+	
+	/*
+	 * Set the router so the request knows
+	 * what to call when it has been created
+	 */
+	public void passRouter( Router router ) {
+		this.router = router ;
+	}
+	
+	/*
+	 * Run is just a wrapper for
+	 * fromSocket, which does
+	 * all the work
+	 */
+	public void run() {
+		if( !handle() ) {
+			LOG.log( Level.WARNING ,  String.format( "Failed to handle request from %s" , getSourceIp() ) ) ;
+		}
 	}
 	
 	public String getSourceIp() {
@@ -84,13 +120,18 @@ public class Request {
 		}
 	}
 	
-	public boolean fromSocket( Socket connection ) {
+	/*
+	 * Handle request, including
+	 * finding the route and sending the response
+	 */
+	public boolean handle() {
 		
 		int i ;
 		Header nextHeader ;
 		BufferedReader dataIn ;
 		String nextLine ;
 		String request = "" ;
+		Response response ;
 		
 		//Attempt to read in the data from the socket
 		try {
@@ -112,7 +153,7 @@ public class Request {
 				request += (char) dataIn.read() ;
 				wait( CHAR_LATENCY ) ;
 			}
-			LOG.log( Level.FINE, String.format( "read request %s", request ) ) ;
+			LOG.log( Level.FINE, String.format( "Read request %s", request ) ) ;
 		} catch( IOException e ) {
 			//Return false if there is an IO error
 			LOG.log( Level.WARNING, "could not read incoming request, generic io error" ) ; 
@@ -194,8 +235,31 @@ public class Request {
 		//Finally, set the connecting ip
 		sourceIp = connection.getInetAddress().getHostName() ;
 	
-		//Return true to indicate success
-		return true ;
+		/* 
+		 * Call route to get the
+		 * response/handler for this
+		 * request
+		 */
+		
+		response = router.route( this ) ;
+		if( response.send( connection ) ) {
+			LOG.log( Level.FINE, String.format( "%s : Successfully responded", sourceIp ) ) ;
+			// Close the connection
+			try {
+				connection.close() ;
+			} catch( IOException e ) {
+				// At this point, we don't care since the response has been sent
+			}
+			// Return true to indicate success
+			return true ;
+		}
+		
+		/* 
+		 * If true not returned from previous
+		 * if statement, something went
+		 * wrong somewhere
+		 */
+		return false ;
 		
 	}
 

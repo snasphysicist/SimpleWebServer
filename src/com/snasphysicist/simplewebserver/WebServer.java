@@ -90,16 +90,9 @@ public class WebServer implements Runnable {
 		Socket connection = null ;
 		String ip ;
 		Request request ;
-		Response response ;
+		Thread requestThread ;
 		
 		while( true ) {
-			
-			//Close the connection, if it is open
-			try {
-				connection.close() ;
-			} catch( IOException | NullPointerException e ) {
-				//Don't really mind if this fails, just keep going
-			}
 			
 			//Exit the loop if the thread is interrupted
 			if( Thread.interrupted() ) {
@@ -108,31 +101,24 @@ public class WebServer implements Runnable {
 			
 			try {
 				
-				//Wait for a connection
+				// Wait for a connection
 				connection = socket.accept() ;
-				//Grab ip address first for logging 
+				// Grab ip address first for logging 
 				ip = connection.getInetAddress().getHostAddress() ;
-				//Create a new request
-				request = new Request() ;
-				if( !request.fromSocket( connection ) ) {
-					//Fundamentally bad request
-					LOG.log( Level.INFO, String.format( "%s : Received bad request", ip ) ) ;
-					//sendBadRequestError( connection, "{\"error\":\"bad request\"}" ) ;
-					continue ;
-				}
-
+				// Create a new request
+				request = new Request( connection , router ) ;
+				// Start handler in a new thread
+				requestThread = new Thread( request ) ;
+				requestThread.start() ;
+				
+				LOG.log( Level.FINE, String.format( "Received request from %s, handler id %d", 
+													ip , requestThread.getId() ) ) ;
+				
 			} catch (IOException e) {
-				//Try again
+				// Try again
 				continue ;
 			}
 			
-			LOG.log( Level.FINE, String.format( "%s : Received request", ip ) ) ;
-			
-			response = router.route( request ) ;
-			if( response.send( connection ) ) {
-				LOG.log( Level.FINE, String.format( "%s : Successfully responded", ip ) ) ;
-				continue ;
-			}
 
 		} //End of main while loop
 		
