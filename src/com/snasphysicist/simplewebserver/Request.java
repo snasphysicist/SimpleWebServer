@@ -310,8 +310,10 @@ public class Request extends Thread {
 	 * Basically, just closes the connection is interrupted
 	 */
 	private void handleInterruption() throws InterruptedException {
-		closeConnection() ;
-		throw new InterruptedException() ;
+		if( this.isInterrupted() ) {
+			closeConnection() ;
+			throw new InterruptedException() ;
+		}
 	}
 	
 }

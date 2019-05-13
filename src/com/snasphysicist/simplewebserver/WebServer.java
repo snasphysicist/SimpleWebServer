@@ -16,14 +16,14 @@ public class WebServer implements Runnable {
 	private final static Logger LOG = Logger.getLogger( Logger.class.getName() ) ;
 	
 	private int port ;
-	private int maxThreads ;
+	private int maximumThreads ;
 	private ServerSocket socket ;
 	private Router router ;
 	private LinkedList<Thread> requestQueue ;
 	
 	public WebServer( int port , int maxThreads , Router router ) {
 		this.port = port ;
-		this.maxThreads = maxThreads ;
+		this.maximumThreads = maxThreads ;
 		this.router = router ;
 		requestQueue = new LinkedList<Thread>() ; 
 		LOG.log( Level.INFO, String.format( "Server initialized on port %d" , port ) ) ;
@@ -121,7 +121,7 @@ public class WebServer implements Runnable {
 						ip , requestThread.getId() ) ) ;
 				
 				// Check number of threads OK, kill oldest if not
-				if( requestQueue.size() > maxThreads ) {
+				if( requestQueue.size() > maximumThreads ) {
 					requestQueue.removeFirst().interrupt() ;
 				}
 				
