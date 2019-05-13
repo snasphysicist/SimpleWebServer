@@ -11,7 +11,7 @@ import java.net.URLDecoder;
 import java.util.logging.Logger ;
 import java.util.logging.Level ;
 
-public class Request implements Runnable {
+public class Request extends Thread {
 	
 	private final static Logger LOG = Logger.getLogger( Logger.class.getName() ) ;
 	
@@ -76,8 +76,13 @@ public class Request implements Runnable {
 	 * all the work
 	 */
 	public void run() {
-		if( !handle() ) {
-			LOG.log( Level.WARNING ,  String.format( "Failed to handle request from %s" , getSourceIp() ) ) ;
+		// Try catch to handle interruptions
+		try {
+			if( !handle() ) {
+				LOG.log( Level.WARNING ,  String.format( "Failed to handle request from %s" , getSourceIp() ) ) ;
+			}
+		} catch( InterruptedException e ) {
+			LOG.log( Level.WARNING , String.format( "Request thread %d interrupted" , this.getId() ) ) ;
 		}
 	}
 	
@@ -124,7 +129,7 @@ public class Request implements Runnable {
 	 * Handle request, including
 	 * finding the route and sending the response
 	 */
-	public boolean handle() {
+	public boolean handle() throws InterruptedException {
 		
 		int i ;
 		Header nextHeader ;
@@ -141,18 +146,20 @@ public class Request implements Runnable {
 			 * Everything up to the first line break
 			 * i.e. all of the headers
 			 */
-			while( nextLine != null && !nextLine.equals( "" ) ) {
+			while( !this.isInterrupted() && nextLine != null && !nextLine.equals( "" ) ) {
 				request += nextLine + "\r\n" ;
 				nextLine = dataIn.readLine() ;
 				wait( LINE_LATENCY ) ;
 			}
+			handleInterruption() ;
 			//Since the empty line was skipped
 			request += "\r\n" ;
 			//Anything left after this (the body)
-			while( dataIn.ready() ) {
+			while( !this.isInterrupted() && dataIn.ready() ) {
 				request += (char) dataIn.read() ;
 				wait( CHAR_LATENCY ) ;
 			}
+			handleInterruption() ;
 			LOG.log( Level.FINE, String.format( "Read request %s", request ) ) ;
 		} catch( IOException e ) {
 			//Return false if there is an IO error
@@ -239,17 +246,14 @@ public class Request implements Runnable {
 		 * Call route to get the
 		 * response/handler for this
 		 * request
+		 * Second check for interrupted
 		 */
-		
+		handleInterruption() ;
 		response = router.route( this ) ;
 		if( response.send( connection ) ) {
 			LOG.log( Level.FINE, String.format( "%s : Successfully responded", sourceIp ) ) ;
 			// Close the connection
-			try {
-				connection.close() ;
-			} catch( IOException e ) {
-				// At this point, we don't care since the response has been sent
-			}
+			closeConnection() ;
 			// Return true to indicate success
 			return true ;
 		}
@@ -287,6 +291,27 @@ public class Request implements Runnable {
 		}
 		//Return false if no match is found
 		return false ;
+	}
+	
+	/*
+	 * Helper function to try to close the connection
+	 * Usually, we don't care too much if this fails
+	 */
+	private void closeConnection() {
+		try {
+			connection.close() ;
+		} catch( IOException e ) {
+			//Do nothing
+		}
+	}
+	
+	/*
+	 * Helper function to handle interruptions
+	 * Basically, just closes the connection is interrupted
+	 */
+	private void handleInterruption() throws InterruptedException {
+		closeConnection() ;
+		throw new InterruptedException() ;
 	}
 	
 }

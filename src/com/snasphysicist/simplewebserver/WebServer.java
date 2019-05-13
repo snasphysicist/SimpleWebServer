@@ -7,6 +7,7 @@ import java.io.IOException ;
 import java.util.logging.Logger ;
 import java.util.logging.Level ; 
 import java.util.function.Function ;
+import java.util.LinkedList ;
 
 //http://cs.au.dk/~amoeller/WWW/examples/FileServer.java
 
@@ -15,12 +16,16 @@ public class WebServer implements Runnable {
 	private final static Logger LOG = Logger.getLogger( Logger.class.getName() ) ;
 	
 	private int port ;
+	private int maxThreads ;
 	private ServerSocket socket ;
 	private Router router ;
-		
-	public WebServer( int port , Router router ) {
+	private LinkedList<Thread> requestQueue ;
+	
+	public WebServer( int port , int maxThreads , Router router ) {
 		this.port = port ;
+		this.maxThreads = maxThreads ;
 		this.router = router ;
+		requestQueue = new LinkedList<Thread>() ; 
 		LOG.log( Level.INFO, String.format( "Server initialized on port %d" , port ) ) ;
 	}
 	
@@ -100,7 +105,6 @@ public class WebServer implements Runnable {
 			}
 			
 			try {
-				
 				// Wait for a connection
 				connection = socket.accept() ;
 				// Grab ip address first for logging 
@@ -110,9 +114,17 @@ public class WebServer implements Runnable {
 				// Start handler in a new thread
 				requestThread = new Thread( request ) ;
 				requestThread.start() ;
+				requestQueue.addLast( requestThread ) ;
 				
+				// Log request
 				LOG.log( Level.FINE, String.format( "Received request from %s, handler id %d", 
-													ip , requestThread.getId() ) ) ;
+						ip , requestThread.getId() ) ) ;
+				
+				// Check number of threads OK, kill oldest if not
+				if( requestQueue.size() > maxThreads ) {
+					requestQueue.removeFirst().interrupt() ;
+				}
+				
 				
 			} catch (IOException e) {
 				// Try again
