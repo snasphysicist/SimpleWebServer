@@ -18,8 +18,8 @@ public class Request
 		Logger.class.getName()
 	);
 	
-	private final static int LINE_LATENCY = 10 ; //ms
-	private final static int CHAR_LATENCY = 1 ; //ms
+	private final static int LINE_LATENCY = 10; //ms
+	private final static int CHAR_LATENCY = 1; //ms
 	
 	private String sourceIp;
 	protected Method method;

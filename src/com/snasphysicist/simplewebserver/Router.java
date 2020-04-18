@@ -13,15 +13,15 @@ public class Router {
 		Logger.class.getName()
 	);
 	
-	Hashtable<String,Function<Request,Response>> routes;
+	Hashtable<String,Function<Request, Response>> routes;
 	
 	public Router() {
-		routes = new Hashtable<String,Function<Request,Response>>();
+		routes = new Hashtable<String, Function<Request,Response>>();
 	}
 
 	public void addRoute(
 		String uri, 
-		Function<Request,Response> handler
+		Function<Request, Response> handler
 	) {
 		routes.put(
 			uri, 
@@ -34,7 +34,7 @@ public class Router {
 		String title, 
 		URL filePath
 	) {	
-		Function<Request,Response> staticAssetHandler = new Function<Request,Response>() {
+		Function<Request, Response> staticAssetHandler = new Function<Request, Response>() {
 			@Override
 			public Response apply(
 				Request rawRequest
@@ -82,7 +82,7 @@ public class Router {
 	
 	public void setErrorHandler(
 		int statusCode, 
-		Function<Request,Response> handler
+		Function<Request, Response> handler
 	) {
 		addRoute(
 			String.format(
@@ -112,7 +112,7 @@ public class Router {
 		Request request
 	) {
 		// Get the uri, try to find a handler based on this
-		Function<Request,Response> handler = routes.get(
+		Function<Request, Response> handler = routes.get(
 			request.getUri()
 		);
 		if(handler == null) {

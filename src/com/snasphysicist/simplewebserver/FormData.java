@@ -5,11 +5,11 @@ import java.util.Hashtable;
 
 public class FormData {
 
-	Hashtable<String,String> data;
+	Hashtable<String, String> data;
 	
 	public FormData() {
 		// Initialise data dictionary
-		data = new Hashtable<String,String>();
+		data = new Hashtable<String, String>();
 	}
 	
 	/*
