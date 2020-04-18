@@ -1,16 +1,15 @@
 
-package com.snasphysicist.simplewebserver ;
+package com.snasphysicist.simplewebserver;
 
-import java.util.Hashtable ;
-
+import java.util.Hashtable;
 
 public class FormData {
 
-	Hashtable<String,String> data ;
+	Hashtable<String,String> data;
 	
 	public FormData() {
-		//Initialise data dictionary
-		data = new Hashtable<String,String>() ;
+		// Initialise data dictionary
+		data = new Hashtable<String,String>();
 	}
 	
 	/*
@@ -18,48 +17,64 @@ public class FormData {
 	 * form data provided as a string
 	 * Returns true/false for success/failure
 	 */
-	public boolean fromString( String formData ) {
-		
-		//May have some residual new lines from the page
-		formData = formData.replaceAll( "\\r|\\n", "" ) ;
+	public boolean fromString(
+		String formData
+	) {	
+		// May have some residual new lines from the page
+		formData = formData.replaceAll(
+			"\\r|\\n",
+			""
+		);
 		
 		// & separates key value pairs
-		String[] lines = formData.split( "&" ) ;
-		for( String line : lines ) {
+		String[] lines = formData.split("&");
+		for(String line : lines) {
 			// = separates the key from the value
-			if( line.indexOf( "=" ) > 0 ) {
+			if(line.indexOf( "=" ) > 0) {
 				data.put( 
-						line.substring( 0, line.indexOf("=") ),
-						line.substring( line.indexOf("=") + 1 ) ) ;
+					line.substring(
+						0, 
+						line.indexOf("=")
+					),
+					line.substring(
+						line.indexOf("=") + 1
+					)
+				);
 			} else {
-				//Fail if format invalid
-				return false ;
+				// Fail if format invalid
+				return false;
 			}
 		}
-		//Return true if all key/value pairs added
-		return true ;
+		// Return true if all key/value pairs added
+		return true;
 	}
 	
 	/*
 	 * Helper methods to check if certain keys are set
 	 */
-	public boolean hasKey( String key ) {
-		return data.containsKey( key ) ;
+	public boolean hasKey(
+		String key
+	) {
+		return data.containsKey(key);
 	}
 	
 	/*
 	 * Note: returns true for empty input array
 	 */
-	public boolean hasKeys( String[] keys ) {
-		boolean has = true ;
-		for( String key : keys ) {
-			has = has && hasKey( key ) ;
+	public boolean hasKeys(
+		String[] keys
+	) {
+		boolean has = true;
+		for(String key : keys) {
+			has = has && hasKey(key);
 		}
-		return has ;
+		return has;
 	}
 	
-	public String getValue( String key ) {
-		return data.get( key ) ;
+	public String getValue(
+		String key
+	) {
+		return data.get(key);
 	}
 
 }
